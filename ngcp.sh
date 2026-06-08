@@ -63,7 +63,14 @@ if [[ "$1" == "pick" ]]; then
     git -C "$nixConfigPath" checkout -b "$remoteBranch" "origin/$remoteBranch"
   fi
   echo "Pulling latest commits before cherry-picking..."
-  if ! git -C "$nixConfigPath" pull --rebase ; then
+  if git -C "$nixConfigPath" pull --rebase ; then
+    echo "Pull successful."
+  elif (( automatic )); then
+    echo "Merge conflict detected during pull. Please run ngcp pull manually"
+    notify-send "Merge conflict detected during ngcp pull." "Please run ngcp pull manually"
+    git -C "$nixConfigPath" rebase --abort
+    exit 1
+  else
     echo "Merge conflict detected during pull."
     echo "Resolve conflicts and run:"
     echo "  git rebase --continue"
