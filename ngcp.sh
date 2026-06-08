@@ -82,7 +82,7 @@ if [[ "$1" == "pick" ]]; then
       fi
     fi
   done
-  git -C "$nixConfigPath" push --force-with-lease origin "$remoteBranch"
+  git -C "$nixConfigPath" push --force origin "$remoteBranch"
   git -C "$nixConfigPath" checkout "$localBranch"
 elif [[ "$1" == "pull" ]]; then
   gitStatus=$(git -C "$nixConfigPath" status --porcelain)
@@ -113,7 +113,7 @@ elif [[ "$1" == "pull" ]]; then
       echo "Pull successful"
     fi
   fi
-    git -C "$nixConfigPath" push --force-with-lease origin "$localBranch"
+    git -C "$nixConfigPath" push --force origin "$localBranch"
 else
   echo "Invalid argument. Please run ngcp --help"
   exit
