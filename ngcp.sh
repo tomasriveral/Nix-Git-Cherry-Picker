@@ -64,7 +64,7 @@ if [[ "$1" == "pick" ]]; then
   fi
   
   for commit in "${@:2}"; do
-    if ! [[ $commit =~ "--.*" ]]; then # if not a flag
+    if ! [[ $commit =~ --.* ]]; then # if not a flag
       if git -C "$nixConfigPath" cherry-pick "$commit"; then
         echo "Applied $commit successfully"
       else
