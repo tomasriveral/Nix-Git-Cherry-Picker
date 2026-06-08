@@ -1,6 +1,11 @@
 set -euo pipefail
 trap 'echo "Interrupted or failed. Repo may be mid-rebase/cherry-pick." ; exit 1' INT ERR
 
+if [[ $# -eq 0 ]]; then
+  echo "Usage: ngcp [mode] [options]"
+  echo "Run 'ngcp --help' for more information."
+  exit 1
+fi
 
 # waits for an internet connection. It pings both Google DNS  and Cloudfare dns in case one of them is down
 pings=0
