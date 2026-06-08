@@ -62,7 +62,19 @@ if [[ "$1" == "pick" ]]; then
   if ! git -C "$nixConfigPath" checkout "$remoteBranch"; then
     git -C "$nixConfigPath" checkout -b "$remoteBranch" "origin/$remoteBranch"
   fi
-  
+  echo "Pulling latest commits before cherry-picking..."
+  if ! git -C "$nixConfigPath" pull --rebase ; then
+    echo "Merge conflict detected during pull."
+    echo "Resolve conflicts and run:"
+    echo "  git rebase --continue"
+    echo "Type 'y' when done."
+    
+    while git -C "$nixConfigPath" rev-parse --verify REBASE_HEAD >/dev/null 2>&1; do
+      read -r answer
+      [[ "$answer" == "y" ]] || continue
+    done
+    echo "Pull successful"
+  fi
   for commit in "${@:2}"; do
     if ! [[ $commit =~ --.* ]]; then # if not a flag
       if git -C "$nixConfigPath" cherry-pick "$commit"; then
