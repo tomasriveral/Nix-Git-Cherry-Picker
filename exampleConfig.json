@@ -1,0 +1,5 @@
+{
+  "localBranch": "laptop",
+  "remoteBranch": "desktop",
+  "nixConfigPath": "~/nixos/"
+}
