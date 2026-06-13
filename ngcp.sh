@@ -45,7 +45,7 @@ for flag in "$@"; do
     echo " pick <commit 1> <commit2> <...>    Cherry-pick commits for the remote branch."
     echo " pull                               Pulls the changes to the local branch."
     echo "Options:"
-    echo "  --automatic                       Exit with no changes if merge conflict and instructs the user to pull manually. This option if for automation."
+    echo "  --automatic                       Exit with no changes if merge conflict and instructs the user to pull manually. Use this option for automation."
     exit
   fi
 done
