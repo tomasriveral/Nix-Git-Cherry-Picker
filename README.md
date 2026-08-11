@@ -37,6 +37,9 @@ For best practices (and to avoid merge conflicts), you should push to your remot
 Usage: ngcp [mode] [options]
 Mode:
  pick <commit 1> <commit2> <...>    Cherry-pick commits for the remote branch.
+ pick -i [n]                        Interactively select from the last 10 (or n) commits.
+ pick --interactive [n]             Interactively select from the last 10 (or n) commits.
+ last <int n>                       Cherry-pick the last n commits.
  pull                               Pulls the changes to the local branch.
 Options:
   --automatic                       Exit with no changes if merge conflict and instructs the user to pull manually. Use this option for automation.
