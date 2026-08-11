@@ -43,6 +43,7 @@ for flag in "$@"; do
     echo "Usage: ngcp [mode] [options]"
     echo "Mode:"
     echo " pick <commit 1> <commit2> <...>    Cherry-pick commits for the remote branch."
+    echo " last <int n>                       Cherry-pick the last n commits."
     echo " pull                               Pulls the changes to the local branch."
     echo "Options:"
     echo "  --automatic                       Exit with no changes if merge conflict and instructs the user to pull manually. Use this option for automation."
@@ -52,7 +53,28 @@ done
 # checks if connection
 
 
-if [[ "$1" == "pick" ]]; then
+if [[ "$1" == "pick" || "$1" == "last" ]]; then
+  if [[ "$1" == "last" ]]; then
+    if [[ "$#" -lt 2 ]] || ! [[ "$2" =~ ^[1-9][0-9]*$ ]]; then
+      echo "Invalid arguments. Usage: ngcp last <number>"
+      exit 1
+    fi
+  
+    mapfile -t commits < <(
+      git -C "$nixConfigPath" log --format='%H' --reverse -n "$2" HEAD
+    )
+  
+    echo "Cherry-picking the last ${#commits[@]} commits:"
+    printf '  %s\n' "${commits[@]}"
+  
+  else
+    if [[ "$#" -lt 2 ]]; then
+      echo "Invalid arguments, you must specify commit hashes"
+      exit 1
+    fi
+  
+    commits=("${@:2}")
+  fi
   if [[ "$#" -lt "2" ]]; then
     echo "Invalid arguments, you must specify commit hashes".
     exit
@@ -82,23 +104,22 @@ if [[ "$1" == "pick" ]]; then
     done
     echo "Pull successful"
   fi
-  for commit in "${@:2}"; do
-    if ! [[ $commit =~ --.* ]]; then # if not a flag
-      if git -C "$nixConfigPath" cherry-pick "$commit"; then
-        echo "Applied $commit successfully"
-      else
-        echo "Cherry-pick of $commit failed."
-        echo "Resolve conflicts and run:"
-        echo "  git cherry-pick --continue"
-        echo
-        echo "Type 'y' when done."
-    
-        while git -C "$nixConfigPath" rev-parse --verify CHERRY_PICK_HEAD >/dev/null 2>&1; do
-          read -r answer
-          [[ "$answer" == "y" ]] || continue
-        done
-        echo "Cherry-pick for $commit resolved."
-      fi
+  for commit in "${commits[@]}"; do
+    if git -C "$nixConfigPath" cherry-pick "$commit"; then
+      echo "Applied $commit successfully"
+    else
+      echo "Cherry-pick of $commit failed."
+      echo "Resolve conflicts and run:"
+      echo "  git cherry-pick --continue"
+      echo
+      echo "Type 'y' when done."
+  
+      while git -C "$nixConfigPath" rev-parse --verify CHERRY_PICK_HEAD >/dev/null 2>&1; do
+        read -r answer
+        [[ "$answer" == "y" ]] || continue
+      done
+  
+      echo "Cherry-pick for $commit resolved."
     fi
   done
   git -C "$nixConfigPath" push --force origin "$remoteBranch"
