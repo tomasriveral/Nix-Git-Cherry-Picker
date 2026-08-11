@@ -18,6 +18,7 @@ outputs = { self, nixpkgs, flake-utils}:
           git
           libnotify
           jq
+          fzf
         ];
       };
       apps.default = {
