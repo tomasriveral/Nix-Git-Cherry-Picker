@@ -43,6 +43,8 @@ for flag in "$@"; do
     echo "Usage: ngcp [mode] [options]"
     echo "Mode:"
     echo " pick <commit 1> <commit2> <...>    Cherry-pick commits for the remote branch."
+    echo " pick -i [n]                        Interactively select from the last 10 (or n) commits."
+    echo " pick --interactive [n]             Interactively select from the last 10 (or n) commits."
     echo " last <int n>                       Cherry-pick the last n commits."
     echo " pull                               Pulls the changes to the local branch."
     echo "Options:"
@@ -54,7 +56,51 @@ done
 
 
 if [[ "$1" == "pick" || "$1" == "last" ]]; then
-  if [[ "$1" == "last" ]]; then
+  interactive=0
+  interactive_count=10
+
+  if [[ "$1" == "pick" && "${2:-}" == "-i" || "$1" == "pick" && "${2:-}" == "--interactive" ]]; then
+    interactive=1
+
+    if [[ -n "${3:-}" ]]; then
+      if ! [[ "$3" =~ ^[1-9][0-9]*$ ]]; then
+        echo "Invalid interactive commit count: $3"
+        exit 1
+      fi
+      interactive_count="$3"
+    fi
+  fi
+
+  if (( interactive )); then
+    if ! command -v fzf >/dev/null 2>&1; then
+      echo "Error: fzf is required for interactive mode."
+      echo "Please install fzf and try again."
+      exit 1
+    fi
+
+    mapfile -t commits < <(
+      git -C "$nixConfigPath" log \
+        --format='%H%x09%h%x09%s' \
+        -n "$interactive_count" \
+        HEAD |
+      fzf \
+        --multi \
+        --reverse \
+        --header="TAB select/deselect • ENTER confirm" \
+        --preview="git -C '$nixConfigPath' show --stat --oneline {1}" |
+      cut -f1
+    )
+
+    if [[ "${#commits[@]}" -eq 0 ]]; then
+      echo "No commits selected."
+      exit 0
+    fi
+
+    # fzf displays newest -> oldest, but cherry-picking should happen
+    # oldest -> newest.
+    mapfile -t commits < <(printf '%s\n' "${commits[@]}" | tac)
+
+  elif [[ "$1" == "last" ]]; then
     if [[ "$#" -lt 2 ]] || ! [[ "$2" =~ ^[1-9][0-9]*$ ]]; then
       echo "Invalid arguments. Usage: ngcp last <number>"
       exit 1
@@ -68,16 +114,7 @@ if [[ "$1" == "pick" || "$1" == "last" ]]; then
     printf '  %s\n' "${commits[@]}"
   
   else
-    if [[ "$#" -lt 2 ]]; then
-      echo "Invalid arguments, you must specify commit hashes"
-      exit 1
-    fi
-  
     commits=("${@:2}")
-  fi
-  if [[ "$#" -lt "2" ]]; then
-    echo "Invalid arguments, you must specify commit hashes".
-    exit
   fi
   
   #if doesnt exist, just get the branch from the remote
